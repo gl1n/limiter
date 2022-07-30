@@ -3,7 +3,7 @@
 
 static constexpr int STACK_SIZE = 1024 * 1024;
 static int call_back(void *args) {
-  Args *_args = (Args *)args;
+  ArgParser::Args *_args = (ArgParser::Args *)args;
   if (mount("proc", "/proc", "proc", MS_NODEV | MS_NOSUID | MS_NOEXEC, NULL)) {
     std::cerr << "mount error" << std::endl;
     exit(EXIT_FAILURE);
@@ -16,7 +16,7 @@ static int call_back(void *args) {
   return 0;
 }
 
-void Container::run(Args *args) {
+void Container::run(ArgParser::Args *args) {
   char *child_stack = new char[STACK_SIZE];
 
   int flags = SIGCHLD | CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS |
