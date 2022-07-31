@@ -8,7 +8,7 @@ public:
   ~Cgroup();
 
   void LimitCPU(int cpu_quota, int cpu_period);
-  void LimitMem(std::string memory, std::string swap);
+  void LimitMem(int memory, int swap);
 
 private:
   std::string mCgroupDir;

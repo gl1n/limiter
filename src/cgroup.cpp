@@ -27,4 +27,15 @@ void Cgroup::LimitCPU(int cpu_period, int cpu_quota) {
     cg.close();
   }
 }
-void Cgroup::LimitMem(std::string memory, std::string swap) {}
+void Cgroup::LimitMem(int memory, int swap) {
+  if (memory == -1) {
+    return;
+  }
+  std::ofstream cg(mCgroupDir + "/memory.max", std::ios::trunc);
+  cg << memory;
+  cg.close();
+
+  if (swap != -1) {
+    cg << swap;
+  }
+}

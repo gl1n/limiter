@@ -1,4 +1,5 @@
 #pragma once
+#include <cgroup.h>
 
 namespace ArgParser {
 
@@ -7,6 +8,8 @@ struct Args {
   char *hostname;
   int cpu_quota;
   int cpu_period;
+  int memory;
+  int swap;
 
   Args() : job(nullptr), hostname(nullptr), cpu_quota(0), cpu_period(0) {}
 

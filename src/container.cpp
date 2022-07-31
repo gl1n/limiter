@@ -1,6 +1,8 @@
 #include <cgroup.h>
 #include <container.h>
 #include <cstring>
+#include <fcntl.h>
+#include <semaphore.h>
 
 static constexpr int STACK_SIZE = 1024 * 1024;
 static int call_back(void *args) {
@@ -19,6 +21,11 @@ static int call_back(void *args) {
     }
   }
 
+  sem_t *sem = sem_open("/semaphore", 0); /* Open a preexisting semaphore. */
+  sem_wait(sem);
+  sem_close(sem);
+  sem_unlink("/semaphore");
+
   execvp(_args->job[0], _args->job);
   std::cerr << "exec error: " << strerror(errno) << std::endl;
   return 0;
@@ -26,15 +33,20 @@ static int call_back(void *args) {
 
 void Container::run(ArgParser::Args *args) {
 
+  sem_t *sem =
+      sem_open("/semaphore", O_CREAT, 0644, 0); /* Initial value is 0. */
+
   char *child_stack = new char[STACK_SIZE];
 
   int flags = SIGCHLD | CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS |
               CLONE_NEWNET | CLONE_NEWIPC | CLONE_NEWUSER;
   int pid = clone(call_back, child_stack + STACK_SIZE, flags,
                   (void *)args); //创建子线程
-
   Cgroup cg(pid);
   cg.LimitCPU(args->cpu_period, args->cpu_quota);
+  cg.LimitMem(args->memory, args->swap);
+  sem_post(sem);
+  sem_close(sem);
 
   waitpid(pid, NULL, 0);
 

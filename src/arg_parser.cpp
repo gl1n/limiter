@@ -12,15 +12,22 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
   std::string hostname;
   int cpu_quota;
   int cpu_period;
+  int memory = -1;
+  int swap = -1;
 
-  auto runMode = (clipp::command("run").set(selected, mode::run),
-                  clipp::values("job", job),
-                  (clipp::option("--hostname").doc("set hostname") &
-                   clipp::value("hostname", hostname)),
-                  (clipp::option("--cpu-quota").doc("set cpu quota") &
-                   clipp::value("quota", cpu_quota)),
-                  (clipp::option("--cpu-period").doc("set cpu period") &
-                   clipp::value("period", cpu_period)));
+  auto runMode =
+      (clipp::command("run").set(selected, mode::run),
+       clipp::values("job", job),
+       (clipp::option("--hostname").doc("set hostname") &
+        clipp::value("hostname", hostname)),
+       (clipp::option("--cpu-quota").doc("set cpu quota") &
+        clipp::value("quota", cpu_quota)),
+       (clipp::option("--cpu-period").doc("set cpu period") &
+        clipp::value("period", cpu_period)),
+       (clipp::option("--memory", "-m").doc("set memory limit (unit=MB)") &
+        clipp::value("memory size", memory)),
+       (clipp::option("--swap-memory").doc("set swap memory limit (unit=MB))") &
+        clipp::value("swap size", swap)));
 
   auto helpMode = (clipp::command("help").set(selected, mode::help));
 
@@ -54,6 +61,9 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
       // get cpu limit
       args.cpu_period = cpu_period;
       args.cpu_quota = cpu_quota;
+      // get memory limit
+      args.memory = memory;
+      args.swap = swap;
 
       break;
 
