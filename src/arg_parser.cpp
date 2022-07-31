@@ -3,17 +3,24 @@
 #include <clipp.h>
 #include <cstring>
 #include <iostream>
+#include <unistd.h>
 
 bool ArgParser::Parse(int argc, char *argv[], Args &args) {
   enum class mode { run, help };
   mode selected = mode::run;
   std::vector<std::string> job;
   std::string hostname;
+  int cpu_quota;
+  int cpu_period;
 
   auto runMode = (clipp::command("run").set(selected, mode::run),
                   clipp::values("job", job),
                   (clipp::option("--hostname").doc("set hostname") &
-                   clipp::value("hostname", hostname)));
+                   clipp::value("hostname", hostname)),
+                  (clipp::option("--cpu-quota").doc("set cpu quota") &
+                   clipp::value("quota", cpu_quota)),
+                  (clipp::option("--cpu-period").doc("set cpu period") &
+                   clipp::value("period", cpu_period)));
 
   auto helpMode = (clipp::command("help").set(selected, mode::help));
 
@@ -25,6 +32,13 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
   if (clipp::parse(argc, argv, cli)) {
     switch (selected) {
     case mode::run:
+      //没有root权限直接exit
+      if (geteuid() != 0) {
+        std::cerr << "Got permisson denied when running " << argv[0]
+                  << ". Please run " << argv[0] << " with root privilege."
+                  << std::endl;
+        exit(EXIT_FAILURE);
+      }
       // get hostname
       if (hostname.size()) {
         args.hostname = new char[hostname.size() + 1];
@@ -37,6 +51,10 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
         strcpy(args.job[i], job[i].data());
       }
       args.job[job.size()] = nullptr;
+      // get cpu limit
+      args.cpu_period = cpu_period;
+      args.cpu_quota = cpu_quota;
+
       break;
 
     case mode::help:
