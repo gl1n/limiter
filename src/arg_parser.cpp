@@ -71,12 +71,12 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
         strcpy(args.hostname, hostname.data());
       }
       // get job
-      args.job = new char *[job.size() + 1];
+      args.command = new char *[job.size() + 1];
       for (size_t i = 0; i != job.size(); i++) {
-        args.job[i] = new char[job[i].size() + 1];
-        strcpy(args.job[i], job[i].data());
+        args.command[i] = new char[job[i].size() + 1];
+        strcpy(args.command[i], job[i].data());
       }
-      args.job[job.size()] = nullptr;
+      args.command[job.size()] = nullptr;
       // get cpu limit
       args.cpu_period = cpu_period;
       args.cpu_quota = cpu_quota;

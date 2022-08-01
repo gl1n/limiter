@@ -4,7 +4,7 @@
 namespace ArgParser {
 
 struct Args {
-  char **job;
+  char **command;
   char *hostname;
   int cpu_quota;
   int cpu_period;
@@ -16,15 +16,15 @@ struct Args {
   int pipe_fd[2];
 
   Args()
-      : job(nullptr), hostname(nullptr), cpu_quota(0), cpu_period(0),
+      : command(nullptr), hostname(nullptr), cpu_quota(0), cpu_period(0),
         image(nullptr) {}
 
   ~Args() {
-    if (job) {
-      for (char **p = job; *p; p++) {
+    if (command) {
+      for (char **p = command; *p; p++) {
         delete[] * p;
       }
-      delete[] job;
+      delete[] command;
     }
 
     delete[] hostname;

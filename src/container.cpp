@@ -7,6 +7,8 @@
 #include <sys/syscall.h>
 
 static constexpr int STACK_SIZE = 1024 * 1024;
+
+//处理镜像
 static void change_root(std::string const &new_root) {
   // bind mount镜像
   if (mount(new_root.data(), new_root.data(), "bind", MS_BIND | MS_REC, NULL) ==
@@ -59,7 +61,7 @@ static int call_back(void *args) {
   //关掉write end，这样当另一个进程也关闭write end时，从read end读取会得到EOF
   close(_args->pipe_fd[1]);
 
-  //阻塞等待EOF
+  //阻塞等待EOF(父进程准备工作完成)
   char ch;
   if (read(_args->pipe_fd[0], &ch, 1) != 0) {
     std::cerr << "expected EOF" << std::endl;
@@ -69,13 +71,18 @@ static int call_back(void *args) {
   std::string new_root(_args->image);
   change_root(new_root);
 
+  //设置hostname
   if (_args->hostname) {
     if (sethostname(_args->hostname, strlen(_args->hostname)) == -1) {
       perror("sethostname error: ");
     }
+  } else {
+    if (sethostname("container", 9) == -1) {
+      perror("sethostname error: ");
+    }
   }
 
-  execvp(_args->job[0], _args->job);
+  execvp(_args->command[0], _args->command);
   perror("exec error: ");
   return 0;
 }
