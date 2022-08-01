@@ -31,11 +31,15 @@ void Cgroup::LimitMem(int memory, int swap) {
   if (memory == -1) {
     return;
   }
-  std::ofstream cg(mCgroupDir + "/memory.max", std::ios::trunc);
-  cg << memory;
-  cg.close();
+  std::ofstream mem_cg(mCgroupDir + "/memory.max", std::ios::trunc);
+  mem_cg << memory;
+  mem_cg.close();
 
+  std::ofstream swap_cg(mCgroupDir + "/memory.swap.max", std::ios::trunc);
   if (swap != -1) {
-    cg << swap;
+    swap_cg << swap;
+  } else {
+    swap_cg << memory;
   }
+  swap_cg.close();
 }

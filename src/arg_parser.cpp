@@ -5,6 +5,22 @@
 #include <iostream>
 #include <unistd.h>
 
+static int convert(std::string str) {
+  if (str.size() == 0) {
+    return -1;
+  }
+  switch (str[str.size() - 1]) {
+  case 'k':
+    return std::stoi(str.substr(0, str.size() - 1)) * 1024;
+  case 'm':
+    return std::stoi(str.substr(0, str.size() - 1)) * 1024 * 1024;
+  case 'g':
+    return std::stoi(str.substr(0, str.size() - 1)) * 1024 * 1024 * 1024;
+  default:
+    return -1;
+  }
+}
+
 bool ArgParser::Parse(int argc, char *argv[], Args &args) {
   enum class mode { run, help };
   mode selected = mode::run;
@@ -12,22 +28,21 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
   std::string hostname;
   int cpu_quota;
   int cpu_period;
-  int memory = -1;
-  int swap = -1;
+  std::string memory;
+  std::string swap;
 
-  auto runMode =
-      (clipp::command("run").set(selected, mode::run),
-       clipp::values("job", job),
-       (clipp::option("--hostname").doc("set hostname") &
-        clipp::value("hostname", hostname)),
-       (clipp::option("--cpu-quota").doc("set cpu quota") &
-        clipp::value("quota", cpu_quota)),
-       (clipp::option("--cpu-period").doc("set cpu period") &
-        clipp::value("period", cpu_period)),
-       (clipp::option("--memory", "-m").doc("set memory limit (unit=MB)") &
-        clipp::value("memory size", memory)),
-       (clipp::option("--swap-memory").doc("set swap memory limit (unit=MB))") &
-        clipp::value("swap size", swap)));
+  auto runMode = (clipp::command("run").set(selected, mode::run),
+                  clipp::values("job", job),
+                  (clipp::option("--hostname").doc("set hostname") &
+                   clipp::value("hostname", hostname)),
+                  (clipp::option("--cpu-quota").doc("set cpu quota") &
+                   clipp::value("quota", cpu_quota)),
+                  (clipp::option("--cpu-period").doc("set cpu period") &
+                   clipp::value("period", cpu_period)),
+                  (clipp::option("--memory", "-m").doc("set memory limit") &
+                   clipp::value("memory size", memory)),
+                  (clipp::option("--swap-memory").doc("set swap memory limit") &
+                   clipp::value("swap size", swap)));
 
   auto helpMode = (clipp::command("help").set(selected, mode::help));
 
@@ -62,8 +77,8 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
       args.cpu_period = cpu_period;
       args.cpu_quota = cpu_quota;
       // get memory limit
-      args.memory = memory;
-      args.swap = swap;
+      args.memory = convert(memory);
+      args.swap = convert(swap);
 
       break;
 
