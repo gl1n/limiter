@@ -3,7 +3,6 @@
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
-#include <semaphore.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 
@@ -30,10 +29,16 @@ static void change_root(std::string const &new_root) {
     exit(EXIT_FAILURE);
   }
 
-  std::cout << putOld << std::endl;
   //修改当前工作目录
   if (chdir("/") == -1) {
     perror("chdir error: ");
+    exit(EXIT_FAILURE);
+  }
+
+  // mount proc
+  if (mount("proc", "/proc", "proc", MS_NODEV | MS_NOSUID | MS_NOEXEC, NULL) ==
+      -1) {
+    perror("mount error: ");
     exit(EXIT_FAILURE);
   }
 
@@ -51,13 +56,16 @@ static void change_root(std::string const &new_root) {
 static int call_back(void *args) {
   ArgParser::Args *_args = (ArgParser::Args *)args;
 
-  if (mount("proc", "/proc", "proc", MS_NODEV | MS_NOSUID | MS_NOEXEC, NULL) ==
-      -1) {
-    perror("mount error: ");
+  //关掉write end，这样当另一个进程也关闭write end时，从read end读取会得到EOF
+  close(_args->pipe_fd[1]);
+
+  //阻塞等待EOF
+  char ch;
+  if (read(_args->pipe_fd[0], &ch, 1) != 0) {
+    std::cerr << "expected EOF" << std::endl;
     exit(EXIT_FAILURE);
   }
 
-  //要在mount proc之后change_root，否则报错dev busy
   std::string new_root(_args->image);
   change_root(new_root);
 
@@ -67,11 +75,6 @@ static int call_back(void *args) {
     }
   }
 
-  sem_t *sem = sem_open("/semaphore", 0); /* Open a preexisting semaphore. */
-  /* sem_wait(sem);
-  std::cout << "here" << std::endl;
-  sem_close(sem);
-  sem_unlink("/semaphore"); */
   execvp(_args->job[0], _args->job);
   perror("exec error: ");
   return 0;
@@ -79,8 +82,9 @@ static int call_back(void *args) {
 
 void Container::run(ArgParser::Args *args) {
 
-  sem_t *sem =
-      sem_open("/semaphore", O_CREAT, 0644, 0); /* Initial value is 0. */
+  if (pipe(args->pipe_fd) == -1) {
+    perror("pipe error: ");
+  }
 
   char *child_stack = new char[STACK_SIZE];
 
@@ -92,6 +96,7 @@ void Container::run(ArgParser::Args *args) {
   Cgroup cg(pid);
   cg.LimitCPU(args->cpu_period, args->cpu_quota);
   cg.LimitMem(args->memory, args->swap);
+
   //设置user namespace映射
   std::ofstream uid_map("/proc/" + std::to_string(pid) + "/uid_map",
                         std::ios::trunc);
@@ -104,8 +109,11 @@ void Container::run(ArgParser::Args *args) {
   gid_map << con;
   gid_map.close();
 
-  sem_post(sem);
-  sem_close(sem);
+  close(args->pipe_fd[0]); // read end用不到，直接关闭
+
+  //关闭write end。当所有write end的文件描述符都被关闭时，尝试从read
+  // end读取会得到EOF
+  close(args->pipe_fd[1]); //通知子进程
 
   waitpid(pid, NULL, 0);
 

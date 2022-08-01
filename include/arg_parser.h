@@ -13,6 +13,8 @@ struct Args {
 
   char *image;
 
+  int pipe_fd[2];
+
   Args()
       : job(nullptr), hostname(nullptr), cpu_quota(0), cpu_period(0),
         image(nullptr) {}
