@@ -30,9 +30,10 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
   int cpu_period;
   std::string memory;
   std::string swap;
+  std::string image;
 
   auto runMode = (clipp::command("run").set(selected, mode::run),
-                  clipp::values("job", job),
+                  clipp::value("image", image), clipp::values("job", job),
                   (clipp::option("--hostname").doc("set hostname") &
                    clipp::value("hostname", hostname)),
                   (clipp::option("--cpu-quota").doc("set cpu quota") &
@@ -61,6 +62,9 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
                   << std::endl;
         exit(EXIT_FAILURE);
       }
+      // get image
+      args.image = new char[image.size() + 1];
+      strcpy(args.image, image.data());
       // get hostname
       if (hostname.size()) {
         args.hostname = new char[hostname.size() + 1];

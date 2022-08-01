@@ -11,7 +11,11 @@ struct Args {
   int memory;
   int swap;
 
-  Args() : job(nullptr), hostname(nullptr), cpu_quota(0), cpu_period(0) {}
+  char *image;
+
+  Args()
+      : job(nullptr), hostname(nullptr), cpu_quota(0), cpu_period(0),
+        image(nullptr) {}
 
   ~Args() {
     if (job) {
@@ -22,6 +26,7 @@ struct Args {
     }
 
     delete[] hostname;
+    delete[] image;
   };
 };
 

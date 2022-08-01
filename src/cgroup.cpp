@@ -7,7 +7,7 @@
 
 Cgroup::Cgroup(int pid) : mCgroupDir("/sys/fs/cgroup/" + sole::uuid1().str()) {
   if (mkdir(mCgroupDir.data(), 0755) == -1) {
-    std::cerr << "mkdir error: " << strerror(errno) << std::endl;
+    perror("mkdir error: ");
   }
   std::ofstream proc(mCgroupDir + "/cgroup.procs");
   proc << pid;
@@ -16,7 +16,7 @@ Cgroup::Cgroup(int pid) : mCgroupDir("/sys/fs/cgroup/" + sole::uuid1().str()) {
 
 Cgroup::~Cgroup() {
   if (rmdir(mCgroupDir.data()) == -1) {
-    std::cerr << "rmdir error: " << strerror(errno) << std::endl;
+    perror("rmdir error: ");
   }
 }
 
