@@ -5,7 +5,7 @@ A linux container (toy) written in C/C++.
 1. extract busybox.tar to somewhere root user can access.
 2. fetch limiter and compile it.
 ```
-git clone https://
+git clone https://github.com/gl1n/limiter.git
 mkdir build && cd build
 cmake ..
 make
