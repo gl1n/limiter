@@ -87,13 +87,12 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
       args.memory = convert(memory);
       args.swap = convert(swap);
 
-      break;
+      return true;
 
     case mode::help:
       std::cout << clipp::make_man_page(cli, argv[0]);
-      break;
+      return false;
     }
-    return true;
   }
   std::cout << clipp::usage_lines(cli, argv[0]) << "\n";
   return false;
