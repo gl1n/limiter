@@ -5,6 +5,7 @@
 #include <iostream>
 #include <unistd.h>
 
+std::string version = "version 0.1.0";
 //将mB gB kB等转成B
 static int convert(std::string str) {
   if (str.size() == 0) {
@@ -49,10 +50,10 @@ bool ArgParser::Parse(int argc, char *argv[], Args &args) {
 
   auto helpMode = (clipp::command("help").set(selected, mode::help));
 
-  auto cli = ((runMode | helpMode),
-              clipp::option("-v", "--version")
-                  .call([]() { std::cout << "version 0.1.0\n\n"; })
-                  .doc("show version"));
+  auto cli =
+      ((runMode | helpMode), clipp::option("-v", "--version")
+                                 .call([]() { std::cout << version << "\n\n"; })
+                                 .doc("show version"));
 
   if (clipp::parse(argc, argv, cli)) {
     switch (selected) {
