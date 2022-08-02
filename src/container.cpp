@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <sys/syscall.h>
 
+//子进程的栈空间大小
 static constexpr int STACK_SIZE = 1024 * 1024;
 
 //处理镜像
@@ -44,11 +45,11 @@ static void change_root(std::string const &new_root) {
     exit(EXIT_FAILURE);
   }
 
+  //处理原先的rootfs
   if (umount2("/.put_old", MNT_DETACH) == -1) {
     perror("umount2 error: ");
     exit(EXIT_FAILURE);
   }
-
   if (rmdir("/.put_old") == -1) {
     perror("rmdir error: ");
     exit(EXIT_FAILURE);
@@ -88,11 +89,11 @@ static int call_back(void *args) {
 }
 
 void Container::run(ArgParser::Args *args) {
-
+  //生成pipe
   if (pipe(args->pipe_fd) == -1) {
     perror("pipe error: ");
   }
-
+  //子进程的栈空间
   char *child_stack = new char[STACK_SIZE];
 
   int flags = SIGCHLD | CLONE_NEWUTS | CLONE_NEWPID | CLONE_NEWNS |
@@ -110,10 +111,10 @@ void Container::run(ArgParser::Args *args) {
   std::ofstream gid_map("/proc/" + std::to_string(pid) + "/gid_map",
                         std::ios::trunc);
   auto uid = getuid();
-  std::string con = "0 " + std::to_string(static_cast<int>(uid)) + " 1";
-  uid_map << con;
+  std::string line = "0 " + std::to_string(static_cast<int>(uid)) + " 1";
+  uid_map << line;
   uid_map.close();
-  gid_map << con;
+  gid_map << line;
   gid_map.close();
 
   close(args->pipe_fd[0]); // read end用不到，直接关闭

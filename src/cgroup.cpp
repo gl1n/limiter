@@ -5,6 +5,7 @@
 #include <sole.hpp>
 #include <sys/stat.h>
 
+//根据pid构造cgroup
 Cgroup::Cgroup(int pid) : mCgroupDir("/sys/fs/cgroup/" + sole::uuid1().str()) {
   if (mkdir(mCgroupDir.data(), 0755) == -1) {
     perror("mkdir error: ");
@@ -14,12 +15,14 @@ Cgroup::Cgroup(int pid) : mCgroupDir("/sys/fs/cgroup/" + sole::uuid1().str()) {
   proc.close();
 }
 
+//删除cgroup
 Cgroup::~Cgroup() {
   if (rmdir(mCgroupDir.data()) == -1) {
     perror("rmdir error: ");
   }
 }
 
+//限制cpu
 void Cgroup::LimitCPU(int cpu_period, int cpu_quota) {
   if (cpu_quota && cpu_period) {
     std::ofstream cg(mCgroupDir + "/cpu.max", std::ios::trunc);
@@ -27,6 +30,7 @@ void Cgroup::LimitCPU(int cpu_period, int cpu_quota) {
     cg.close();
   }
 }
+//限制内存
 void Cgroup::LimitMem(int memory, int swap) {
   if (memory == -1) {
     return;

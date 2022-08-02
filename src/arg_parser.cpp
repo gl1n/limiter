@@ -5,6 +5,7 @@
 #include <iostream>
 #include <unistd.h>
 
+//将mB gB kB等转成B
 static int convert(std::string str) {
   if (str.size() == 0) {
     return -1;
@@ -21,6 +22,7 @@ static int convert(std::string str) {
   }
 }
 
+//解析命令行参数
 bool ArgParser::Parse(int argc, char *argv[], Args &args) {
   enum class mode { run, help };
   mode selected = mode::run;
